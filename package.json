@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "moment-timezone": "^0.5.45",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "pdfkit": "^0.16.0",
+    "puppeteer": "^24.2.1",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0",
+    "ws": "^8.18.1"
+  }
+}
