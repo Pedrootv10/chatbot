@@ -19,7 +19,7 @@ function limparArquivoJsonDiario() {
             console.log('Mudança de data detectada. Limpando o arquivo JSON...');
             saudacoesEnviadas = {}; // Resetar saudações enviadas
             temposPrimeiraSaudacao = {}; // Resetar tempos de primeira saudação
-            fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao }, null, 2)); // Limpa o arquivo
+            fs.writeFileSync(arquivoJson, JSON.stringify({}, null, 2)); // Limpa o arquivo completamente
             console.log('Arquivo JSON limpo!');
             ultimaData = hoje;
         }
@@ -95,7 +95,7 @@ Aceitamos *PIX, cartão e dinheiro na entrega*.
 Sandoval Mesquita, 629 - Santa Lúcia 1, *Bom Despacho-MG*.
 
 🍕 *Cardápio:*  
-Confira e realize seu pedido em nosso cardápio completo aqui: (https://vovolaurapizzaria.online/)`);
+Confira e realize seu pedido em nosso cardápio completo aqui: https://vovolaurapizzaria.online/`);
             }, 120000);
 
             const timeout = setTimeout(async () => {
