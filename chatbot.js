@@ -6,19 +6,24 @@ const path = require('path');
 let reconnectAttempts = 0;
 let saudacoesEnviadas = {}; // Armazena as saudações enviadas
 let temposPrimeiraSaudacao = {}; // Armazena o tempo da primeira saudação por número
+let ultimaData = new Date().toDateString(); // Armazena a última data verificada
 
 // Caminho para o arquivo JSON
 const arquivoJson = path.join(__dirname, 'saudacoes.json');
 
-// Função para limpar o arquivo JSON a cada 20 horas
-function limparArquivoJson() {
+// Função para limpar o arquivo JSON diariamente
+function limparArquivoJsonDiario() {
     setInterval(() => {
-        console.log('Limpando o arquivo JSON...');
-        saudacoesEnviadas = {}; // Resetar saudações enviadas
-        temposPrimeiraSaudacao = {}; // Resetar tempos de primeira saudação
-        fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao }, null, 2)); // Limpa o arquivo
-        console.log('Arquivo JSON limpo!');
-    }, 20 * 60 * 60 * 1000); // 20 horas
+        const hoje = new Date().toDateString();
+        if (hoje !== ultimaData) {
+            console.log('Mudança de data detectada. Limpando o arquivo JSON...');
+            saudacoesEnviadas = {}; // Resetar saudações enviadas
+            temposPrimeiraSaudacao = {}; // Resetar tempos de primeira saudação
+            fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao }, null, 2)); // Limpa o arquivo
+            console.log('Arquivo JSON limpo!');
+            ultimaData = hoje;
+        }
+    }, 60 * 60 * 1000); // Verifica a cada 1 hora
 }
 
 function initializeClient() {
@@ -144,15 +149,14 @@ function attemptReconnect(client) {
     console.log('Tentando reconectar...');
     client.destroy().then(() => {
         reconnectAttempts++;
-        const reconnectDelay = Math.min(15 * reconnectAttempts, 60); // Atraso de 15s por tentativa, até 1 minuto
+        const reconnectDelay = Math.min(15 * reconnectAttempts, 60);
         console.log(`Tentando reconectar em ${reconnectDelay} segundos...`);
         setTimeout(() => {
             console.log('Reconectando...');
             initializeClient();
-        }, reconnectDelay * 1000); // Multiplicamos por 1000 para segundos
+        }, reconnectDelay * 1000);
     });
 }
 
-// Inicia o bot e a limpeza do arquivo JSON
 initializeClient();
-limparArquivoJson();
+limparArquivoJsonDiario();
