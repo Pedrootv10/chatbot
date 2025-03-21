@@ -1,11 +1,9 @@
-const qrcode = require('qrcode-terminal'); 
+const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const fs = require('fs');
 const path = require('path');
 
 let reconnectAttempts = 0;
-let saudacoesEnviadas = {}; // Armazena as saudações enviadas
-let temposPrimeiraSaudacao = {}; // Armazena o tempo da primeira saudação por número
 let ultimaData = new Date().toDateString(); // Armazena a última data verificada
 
 // Caminho para o arquivo JSON
@@ -15,15 +13,30 @@ const arquivoJson = path.join(__dirname, 'saudacoes.json');
 function limparArquivoJsonDiario() {
     setInterval(() => {
         const hoje = new Date().toDateString();
+        console.log('Hoje:', hoje, 'Última data verificada:', ultimaData); // Adiciona log
+
         if (hoje !== ultimaData) {
-            console.log('Mudança de data detectada. Limpando o arquivo JSON...');
+            console.log('Mudança de data detectada. Excluindo o arquivo JSON...');
             saudacoesEnviadas = {}; // Resetar saudações enviadas
             temposPrimeiraSaudacao = {}; // Resetar tempos de primeira saudação
-            fs.writeFileSync(arquivoJson, JSON.stringify({}, null, 2)); // Limpa o arquivo completamente
-            console.log('Arquivo JSON limpo!');
+
+            // Atualiza a ultimaData
             ultimaData = hoje;
+
+            // Exclui o arquivo JSON do dia anterior
+            if (fs.existsSync(arquivoJson)) {
+                try {
+                    fs.unlinkSync(arquivoJson);
+                    console.log('Arquivo JSON do dia anterior excluído!');
+                } catch (err) {
+                    console.error('Erro ao excluir o arquivo JSON:', err);
+                }
+            }
+
+            // Marcar o arquivo para não ser recriado
+            fs.writeFileSync(path.join(__dirname, 'nao_recriar.json'), JSON.stringify({ ultimaData }, null, 2));
         }
-    }, 60 * 60 * 1000); // Verifica a cada 1 hora
+    }, 30 * 1000); // Verifica a cada 30 segundos
 }
 
 function initializeClient() {
@@ -31,15 +44,37 @@ function initializeClient() {
         authStrategy: new LocalAuth({ clientId: "client-one" })
     });
 
-    // Verifica se o arquivo JSON existe, se não cria um
-    if (fs.existsSync(arquivoJson)) {
-        const dados = JSON.parse(fs.readFileSync(arquivoJson, 'utf-8'));
-        saudacoesEnviadas = dados.saudacoesEnviadas || {};
-        temposPrimeiraSaudacao = dados.temposPrimeiraSaudacao || {};
-    } else {
-        fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao }, null, 2));
+    // Verifica se o arquivo 'nao_recriar.json' existe
+    if (fs.existsSync(path.join(__dirname, 'nao_recriar.json'))) {
+        console.log('Arquivo JSON não será recriado porque foi marcado.');
+        return; // Não cria o cliente nem recria o arquivo JSON
     }
 
+    // Verifica se o arquivo JSON existe e lê os dados
+    if (fs.existsSync(arquivoJson)) {
+        console.log('Arquivo JSON encontrado. Lendo dados...');
+        const dados = JSON.parse(fs.readFileSync(arquivoJson, 'utf-8'));
+        const hoje = new Date().toDateString();
+
+        // Se a data no arquivo for diferente da data atual, excluir os dados antigos
+        if (dados.ultimaData !== hoje) {
+            console.log('Data no arquivo diferente da data atual. Excluindo dados antigos...');
+            saudacoesEnviadas = {};
+            temposPrimeiraSaudacao = {};
+            fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao, ultimaData: hoje }, null, 2));
+        } else {
+            console.log('Data no arquivo é a mesma de hoje. Mantendo dados...');
+            saudacoesEnviadas = dados.saudacoesEnviadas || {};
+            temposPrimeiraSaudacao = dados.temposPrimeiraSaudacao || {};
+            ultimaData = dados.ultimaData; // Atualiza a ultimaData para garantir sincronia
+        }
+    } else {
+        // Se o arquivo não existir, cria um novo com os dados vazios e a data atual
+        console.log('Arquivo JSON não encontrado. Criando novo arquivo com dados vazios...');
+        fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao, ultimaData: new Date().toDateString() }, null, 2));
+    }
+
+    // Eventos de cliente
     client.on('qr', qr => qrcode.generate(qr, { small: true }));
     client.on('ready', () => console.log('Tudo certo! WhatsApp conectado.'));
     client.on('authenticated', () => console.log('Autenticação bem-sucedida!'));
@@ -109,7 +144,8 @@ Confira e realize seu pedido em nosso cardápio completo aqui: https://vovolaura
         }
 
         // Salva os dados no arquivo JSON
-        fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao }, null, 2));
+        console.log('Salvando dados no arquivo JSON...');
+        fs.writeFileSync(arquivoJson, JSON.stringify({ saudacoesEnviadas, temposPrimeiraSaudacao, ultimaData: hoje }, null, 2));
 
         const delayedMessages = /\b(vai demorar muito|estou esperando|qual é o tempo de entrega|está demorando|ta chegando|vai demorar muito ainda|faz muito tempo que pedi|o pedido tá atrasado|que atraso|atraso|demorando|meu pedido já saiu|não foi entregue|nao foi entregue|já saiu|ta demorando)\b/i;
         
