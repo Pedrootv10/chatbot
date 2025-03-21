@@ -5,6 +5,8 @@ const path = require('path');
 
 let reconnectAttempts = 0;
 let ultimaData = new Date().toDateString(); // Armazena a última data verificada
+let saudacoesEnviadas = {}; // Variável global para saudações enviadas
+let temposPrimeiraSaudacao = {}; // Variável global para tempos de primeira saudação
 
 // Caminho para o arquivo JSON
 const arquivoJson = path.join(__dirname, 'saudacoes.json');
