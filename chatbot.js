@@ -118,19 +118,7 @@ function initializeClient() {
             await chat.sendMessage('Só clicar aqui: https://vovolaurapizzaria.online/');
 
             setTimeout(async () => {
-                await chat.sendMessage(`😊 Aqui estão algumas informações que podem te ajudar:
-
-📅 *Nosso funcionamento:*  
-Aberto de segunda a segunda, só fechamos às terças-feiras.
-
-💳 *Formas de pagamento:*  
-Aceitamos *PIX, cartão e dinheiro na entrega*.
-
-📍 *Endereço:*  
-Sandoval Mesquita, 629 - Santa Lúcia 1, *Bom Despacho-MG*.
-
-🍕 *Cardápio:*  
-Confira e realize seu pedido em nosso cardápio completo aqui: https://vovolaurapizzaria.online/`);
+                await chat.sendMessage(``);
             }, 120000);
 
             const timeout = setTimeout(async () => {
